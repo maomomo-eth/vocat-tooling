@@ -14,6 +14,9 @@ EOF
 }
 
 [ "$#" -ge 1 ] || { usage >&2; exit 2; }
+case "$1" in
+  -h|--help) usage; exit 0 ;;
+esac
 TARGET="$1"
 shift
 
@@ -119,4 +122,3 @@ printf 'source_commit=%s\nsource_version=%s\nbuild_time=%s\ntarget=linux/%s\ngo_
 tar -C "$OUTPUT_DIR" -czf "$ARCHIVE" "$BUNDLE_NAME"
 
 printf '部署包已生成:\n  %s\nSHA-256:\n  %s\n' "$ARCHIVE" "$(sha256sum "$ARCHIVE" | awk '{print $1}')"
-
