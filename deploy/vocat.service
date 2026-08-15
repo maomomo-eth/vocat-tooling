@@ -1,0 +1,42 @@
+[Unit]
+Description=VoCat cellular and VoWiFi control service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/vocat
+EnvironmentFile=/etc/vocat/env
+Environment=VOCAT_DATABASE_PATH=/opt/vocat/data/vocat.db
+ExecStart=/opt/vocat/bin/vocat serve
+Restart=on-failure
+RestartSec=3s
+TimeoutStartSec=30s
+TimeoutStopSec=40s
+RuntimeDirectory=vocat
+RuntimeDirectoryMode=0755
+
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=false
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ReadWritePaths=/opt/vocat/data /opt/vocat/bin
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK AF_PACKET
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+UMask=0077
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
