@@ -18,7 +18,7 @@ usage() {
 用法: ./install-or-upgrade.sh [选项]
 
 选项:
-  --listen <IP:端口>    首次安装时写入 VOCAT_ADDR；默认 127.0.0.1:7575
+  --listen <IP:端口>    首次安装时写入 VOCAT_ADDR；默认 0.0.0.0:7575
   --replace-service     用包内 vocat.service 覆盖现有 systemd 单元
   -h, --help            显示帮助
 EOF
@@ -86,7 +86,7 @@ mv -f "$BIN_PATH.new" "$BIN_PATH"
 ln -sfn "$BIN_PATH" /usr/local/bin/vocat
 
 if [ ! -f "$ENV_FILE" ]; then
-  : "${LISTEN_ADDR:=127.0.0.1:7575}"
+  : "${LISTEN_ADDR:=0.0.0.0:7575}"
   printf 'VOCAT_ADDR=%s\nVOCAT_DATABASE_PATH=%s\nVOCAT_SECURE_COOKIES=false\n' \
     "$LISTEN_ADDR" "$DATA_DIR/vocat.db" > "$ENV_FILE"
   chmod 0600 "$ENV_FILE"
@@ -119,4 +119,3 @@ if [ -f "$BIN_PATH.previous" ]; then
 fi
 printf '请查看日志: journalctl -u vocat -n 100 --no-pager\n' >&2
 exit 1
-
