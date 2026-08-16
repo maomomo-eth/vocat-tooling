@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# 构建可离线上传到 Linux ARM 主机的 VoCat 部署包。
+# 构建可离线上传到 Linux 主机的 VoCat 部署包。
 set -euo pipefail
 
 usage() {
   cat <<'EOF'
-用法: build-cross.sh <arm64|armv7> [选项]
+用法: build-cross.sh <amd64|x86_64|arm64|armv7> [选项]
 
 选项:
   --source <目录>     VoCat 源码目录（默认 /home/codex/dev/go/VoCat）
@@ -35,6 +35,11 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "$TARGET" in
+  amd64|x86_64)
+    GOARCH=amd64
+    GOARM=""
+    PLATFORM=amd64
+    ;;
   arm64|aarch64)
     GOARCH=arm64
     GOARM=""
@@ -46,7 +51,7 @@ case "$TARGET" in
     PLATFORM=armv7
     ;;
   *)
-    printf '不支持的目标: %s（支持 arm64、armv7）\n' "$TARGET" >&2
+    printf '不支持的目标: %s（支持 amd64、x86_64、arm64、armv7）\n' "$TARGET" >&2
     exit 2
     ;;
 esac

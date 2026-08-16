@@ -2,7 +2,7 @@
 
 这个仓库与 [VoCat 主仓库](https://github.com/MengMengCode/VoCat) 分离，只提供可审计的本地构建、交叉编译和 systemd 部署脚本。
 
-默认目标是 Linux ARM64（`aarch64` / `arm64`）主机。构建产物不含自动更新逻辑；是否升级完全由操作者决定。
+默认目标是 Linux `amd64`、`arm64` 或 `armv7` 主机。构建产物不含自动更新逻辑；是否升级完全由操作者决定。
 
 ## 仓库地址
 
@@ -26,7 +26,8 @@
 ## 目录
 
 - `scripts/build-local.sh`：在本机构建并测试当前架构的 VoCat。
-- `scripts/build-cross.sh`：构建 Linux `arm64` 或 `armv7` 离线部署包。
+- `scripts/build-cross.sh`：构建 Linux `amd64`、`arm64` 或 `armv7` 离线部署包。
+- `deploy/install-latest.sh`：从 GitHub Releases 拉取最新部署包并安装或升级。
 - `deploy/install-or-upgrade.sh`：在目标 Linux systemd 主机上安装或升级部署包。
 - `deploy/vocat.service`：默认的 systemd 服务单元。
 
@@ -60,12 +61,18 @@ git diff HEAD..origin/master
 
 确认后才执行 `git checkout <新的提交哈希>`。
 
-## 交叉编译 ARM64
+## 构建 Linux 部署包
 
-回到部署工具仓库，构建 ARM64 离线包：
+回到部署工具仓库，构建 x86_64/amd64 离线包：
 
 ```bash
 cd ~/vocat-build/vocat-tooling
+./scripts/build-cross.sh amd64 --source ~/vocat-build/VoCat
+```
+
+构建 ARM64 离线包：
+
+```bash
 ./scripts/build-cross.sh arm64 --source ~/vocat-build/VoCat
 ```
 
@@ -74,10 +81,10 @@ cd ~/vocat-build/vocat-tooling
 1. 以 `npm ci --ignore-scripts` 安装锁定的前端依赖；
 2. 构建嵌入式前端；
 3. 运行 `go test ./...` 和 `go vet ./...`；
-4. 以 `CGO_ENABLED=0` 交叉编译 Linux ARM 二进制；
+4. 以 `CGO_ENABLED=0` 交叉编译 Linux 二进制；
 5. 创建含二进制、校验和、服务单元和部署脚本的 `tar.gz` 包。
 
-产物位于 `dist/`，示例：`dist/vocat-linux-arm64-<版本>.tar.gz`。
+产物位于 `dist/`，示例：`dist/vocat-linux-amd64-<版本>.tar.gz`、`dist/vocat-linux-arm64-<版本>.tar.gz`。
 
 对于 32 位 ARMv7 目标，改为：
 
@@ -89,6 +96,34 @@ cd ~/vocat-build/vocat-tooling
 
 ```bash
 ./scripts/build-local.sh --source ~/vocat-build/VoCat
+```
+
+## 从 GitHub Releases 一键安装或升级
+
+在目标 Linux systemd 主机上以 root 执行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/maomomo-eth/vocat-tooling/main/deploy/install-latest.sh | bash
+```
+
+或使用 `wget`：
+
+```bash
+wget -qO- https://raw.githubusercontent.com/maomomo-eth/vocat-tooling/main/deploy/install-latest.sh | bash
+```
+
+脚本会自动识别 `x86_64`、`aarch64` 或 `armv7`，下载最新 release 中匹配的 `vocat-linux-<平台>-<版本>.tar.gz`，如 release 提供 `SHA256SUMS.txt` 则先校验外层包，再执行包内安装脚本。
+
+首次安装时可指定监听地址：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/maomomo-eth/vocat-tooling/main/deploy/install-latest.sh | bash -s -- --listen 192.168.1.10:7575
+```
+
+安装指定 release：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/maomomo-eth/vocat-tooling/main/deploy/install-latest.sh | bash -s -- --tag <release标签>
 ```
 
 ## 上传部署包到 ARM 主机
