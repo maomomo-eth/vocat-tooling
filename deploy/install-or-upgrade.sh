@@ -46,6 +46,41 @@ command -v systemctl >/dev/null 2>&1 || { printf '此脚本仅支持 systemd 主
 )
 "$BUNDLE_DIR/vocat" version
 
+install_runtime_dependencies() {
+  local missing=""
+  command -v ip >/dev/null 2>&1 || missing="$missing iproute2"
+  command -v qmi-network >/dev/null 2>&1 || missing="$missing libqmi-utils"
+  if ! command -v busybox >/dev/null 2>&1 && ! command -v udhcpc >/dev/null 2>&1; then
+    missing="$missing busybox"
+  fi
+  [ -n "$missing" ] || return 0
+
+  printf '正在安装运行依赖:%s\n' "$missing"
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get update -qq
+    DEBIAN_FRONTEND=noninteractive apt-get install -y $missing
+  elif command -v dnf >/dev/null 2>&1; then
+    # shellcheck disable=SC2086
+    dnf install -y $missing
+  elif command -v yum >/dev/null 2>&1; then
+    # shellcheck disable=SC2086
+    yum install -y $missing
+  elif command -v pacman >/dev/null 2>&1; then
+    # shellcheck disable=SC2086
+    pacman -Sy --noconfirm $missing
+  elif command -v apk >/dev/null 2>&1; then
+    # shellcheck disable=SC2086
+    apk add --no-cache $missing
+  elif command -v opkg >/dev/null 2>&1; then
+    opkg update >/dev/null 2>&1 || true
+    # shellcheck disable=SC2086
+    opkg install $missing
+  else
+    printf '无法自动安装依赖，请手动安装:%s\n' "$missing" >&2
+    exit 1
+  fi
+}
+
 if [ -n "$LISTEN_ADDR" ]; then
   case "$LISTEN_ADDR" in
     *:*) ;;
@@ -58,6 +93,7 @@ if [ ! -f "$DATA_DIR/vocat.db" ]; then
   NEW_DATABASE=1
 fi
 
+install_runtime_dependencies
 systemctl stop vocat 2>/dev/null || true
 
 install -d -m 0755 "$BIN_DIR"
